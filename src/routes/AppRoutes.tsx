@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import Home from '@/pages/Home';
 import BookAppointment from '@/pages/BookAppointment';
+import AppointmentBooking from '@/pages/AppointmentBooking';
 import AdminDashboard from '@/pages/AdminDashboard';
 import PublicHeader from '@/layout/Header/PublicHeader';
 
@@ -29,6 +30,7 @@ export default function AppRoutes() {
               <Route path="/" element={<Home />} />
               <Route path="/services" element={<Services />} />
               <Route path="/book" element={<BookAppointment />} />
+              <Route path="/appointment" element={<AppointmentBooking />} />
               <Route path="/contact" element={<Contact />} />
             </Routes>
           </>
