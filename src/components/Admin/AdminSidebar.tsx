@@ -17,7 +17,7 @@ const AdminSidebar = () => {
       name: "Dashboard", 
       icon: <Home className="w-5 h-5" />, 
       path: "/Administrator", 
-      active: true 
+      active: false 
     },
     { 
       name: "Patients", 
@@ -46,8 +46,8 @@ const AdminSidebar = () => {
     { 
       name: "Settings", 
       icon: <Settings className="w-5 h-5" />, 
-      path: "/Administratorin/settings", 
-      active: false 
+      path: "/Administrator/settings", 
+      active: true 
     },
   ];
 

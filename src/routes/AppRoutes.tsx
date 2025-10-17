@@ -3,6 +3,7 @@ import Home from '@/pages/Home';
 import BookAppointment from '@/pages/BookAppointment';
 import AppointmentBooking from '@/pages/AppointmentBooking';
 import AdminDashboard from '@/pages/AdminDashboard';
+import Settings from '@/pages/Settings';
 import PublicHeader from '@/layout/Header/PublicHeader';
 
 // Placeholder components for routes that don't exist yet
@@ -22,7 +23,8 @@ export default function AppRoutes() {
   return (
     <>
       <Routes>
-        <Route path="/Administrator/*" element={<AdminDashboard />} />
+        <Route path="/Administrator" element={<AdminDashboard />} />
+        <Route path="/Administrator/settings" element={<Settings />} />
         <Route path="/*" element={
           <>
             <PublicHeader />
