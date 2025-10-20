@@ -4,6 +4,8 @@ import BookAppointment from '@/pages/BookAppointment';
 import AppointmentBooking from '@/pages/AppointmentBooking';
 import AdminDashboard from '@/pages/AdminDashboard';
 import Settings from '@/pages/Settings';
+import PatientPanel from '@/pages/PatientPanel';
+import DoctorPlan from '@/pages/DoctorPlan';
 import PublicHeader from '@/layout/Header/PublicHeader';
 
 // Placeholder components for routes that don't exist yet
@@ -23,8 +25,13 @@ export default function AppRoutes() {
   return (
     <>
       <Routes>
+        {/* Stakeholder dashboards */}
         <Route path="/Administrator" element={<AdminDashboard />} />
         <Route path="/Administrator/settings" element={<Settings />} />
+        <Route path="/Doctor" element={<DoctorPlan />} />
+        <Route path="/Patient" element={<PatientPanel />} />
+
+        {/* Public site */}
         <Route path="/*" element={
           <>
             <PublicHeader />
