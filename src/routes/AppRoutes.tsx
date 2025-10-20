@@ -6,6 +6,10 @@ import AdminDashboard from '@/pages/AdminDashboard';
 import Settings from '@/pages/Settings';
 import PatientPanel from '@/pages/PatientPanel';
 import DoctorPlan from '@/pages/DoctorPlan';
+import Login from '@/pages/auth/Login';
+import Signup from '@/pages/auth/Signup';
+import Forgot from '@/pages/auth/Forgot';
+import Reset from '@/pages/auth/Reset';
 import PublicHeader from '@/layout/Header/PublicHeader';
 
 // Placeholder components for routes that don't exist yet
@@ -30,6 +34,12 @@ export default function AppRoutes() {
         <Route path="/Administrator/settings" element={<Settings />} />
         <Route path="/Doctor" element={<DoctorPlan />} />
         <Route path="/Patient" element={<PatientPanel />} />
+
+        {/* Auth */}
+        <Route path="/auth/login" element={<Login />} />
+        <Route path="/auth/signup" element={<Signup />} />
+        <Route path="/auth/forgot" element={<Forgot />} />
+        <Route path="/auth/reset" element={<Reset />} />
 
         {/* Public site */}
         <Route path="/*" element={
