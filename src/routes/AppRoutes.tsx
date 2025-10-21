@@ -4,6 +4,7 @@ import BookAppointment from '@/pages/BookAppointment';
 import AdminDashboard from '@/pages/AdminDashboard';
 import Settings from '@/pages/Settings';
 import Messages from '@/pages/Messages';
+import Reports from '@/pages/Reports';
 import PatientPanel from '@/pages/PatientPanel';
 import DoctorPlan from '@/pages/DoctorPlan';
 import Login from '@/pages/auth/Login';
@@ -56,6 +57,14 @@ export default function AppRoutes() {
           } 
         />
         <Route 
+          path="/Administrator/reports" 
+          element={
+            <ProtectedRoute allowedRoles={['Administrator']}>
+              <Reports />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/Doctor" 
           element={
             <ProtectedRoute allowedRoles={['Doctor']}>
@@ -80,6 +89,14 @@ export default function AppRoutes() {
           } 
         />
         <Route 
+          path="/Doctor/reports" 
+          element={
+            <ProtectedRoute allowedRoles={['Doctor']}>
+              <Reports />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/Patient" 
           element={
             <ProtectedRoute allowedRoles={['Patient']}>
@@ -100,6 +117,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['Patient']}>
               <Messages />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Patient/reports" 
+          element={
+            <ProtectedRoute allowedRoles={['Patient']}>
+              <Reports />
             </ProtectedRoute>
           } 
         />
