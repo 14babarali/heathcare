@@ -1,33 +1,158 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { doctorService } from "@/services/doctorService";
+import { appointmentService } from "@/services/appointmentService";
+import { useAuth } from "@/providers/AuthProvider";
+
+interface Doctor {
+  id: string;
+  name: string;
+  specialty: string;
+  rating: number;
+  avatar?: string;
+  isAvailable: boolean;
+}
 
 export default function AppointmentForm() {
+  const { user } = useAuth();
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
+    doctorId: "",
     name: "",
     email: "",
     phone: "",
     date: "",
     time: "",
-    service: "",
+    type: "in-person",
+    problemDescription: "",
     notes: "",
   });
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoading(true);
+        const data = await doctorService.getDoctors({ isAvailable: true });
+        setDoctors(data);
+      } catch (error) {
+        console.error('Error fetching doctors:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
 
   const handleChange = (key: string, value: string) =>
     setForm({ ...form, [key]: value });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Appointment submitted:", form);
+    if (!user?.id) {
+      alert('Please log in to book an appointment');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await appointmentService.createAppointment({
+        doctorId: form.doctorId,
+        patientId: user.id,
+        appointmentDate: form.date,
+        appointmentTime: form.time,
+        type: form.type as 'consultation' | 'follow-up' | 'emergency',
+        reason: form.problemDescription,
+        notes: form.notes,
+      });
+      
+      alert('Appointment booked successfully!');
+      // Reset form
+      setForm({
+        doctorId: "",
+        name: "",
+        email: "",
+        phone: "",
+        date: "",
+        time: "",
+        type: "in-person",
+        problemDescription: "",
+        notes: "",
+      });
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      alert('Failed to book appointment. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-md p-8 w-full max-w-4xl mx-auto">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mx-auto mb-8"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+            <div className="space-y-6">
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+              <div className="h-12 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <form
       onSubmit={handleSubmit}
       className="bg-white rounded-2xl shadow-md p-8 w-full max-w-4xl mx-auto"
     >
+      {/* Doctor Selection */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Your Doctor</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {doctors.map((doctor) => (
+            <div
+              key={doctor.id}
+              className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                form.doctorId === doctor.id
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+              onClick={() => handleChange("doctorId", doctor.id)}
+            >
+              <div className="flex items-center gap-3">
+                <img
+                  src={doctor.avatar || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=60&h=60&fit=crop&crop=face"}
+                  className="w-12 h-12 rounded-full object-cover"
+                  alt={doctor.name}
+                />
+                <div>
+                  <h4 className="font-semibold text-gray-800">{doctor.name}</h4>
+                  <p className="text-sm text-gray-500">{doctor.specialty}</p>
+                  <div className="flex items-center mt-1">
+                    <span className="text-yellow-400">★</span>
+                    <span className="text-sm text-gray-600 ml-1">{doctor.rating}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-6">
@@ -43,6 +168,7 @@ export default function AppointmentForm() {
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
               className="pl-10"
+              required
             />
           </div>
 
@@ -59,6 +185,7 @@ export default function AppointmentForm() {
               value={form.email}
               onChange={(e) => handleChange("email", e.target.value)}
               className="pl-10"
+              required
             />
           </div>
 
@@ -75,6 +202,7 @@ export default function AppointmentForm() {
               value={form.phone}
               onChange={(e) => handleChange("phone", e.target.value)}
               className="pl-10"
+              required
             />
           </div>
         </div>
@@ -84,15 +212,17 @@ export default function AppointmentForm() {
           {/* Date */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              {/* <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-              </svg> */}
+              </svg>
             </div>
             <Input
               type="date"
               value={form.date}
               onChange={(e) => handleChange("date", e.target.value)}
               className="pl-10"
+              min={new Date().toISOString().split('T')[0]}
+              required
             />
           </div>
 
@@ -103,66 +233,96 @@ export default function AppointmentForm() {
                 <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/>
               </svg>
             </div>
-            <Select onValueChange={(v) => handleChange("time", v)}>
+            <Select onValueChange={(v) => handleChange("time", v)} required>
               <SelectTrigger className="pl-10">
                 <SelectValue placeholder="Select Time" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="9:00 AM">9:00 AM</SelectItem>
-                <SelectItem value="11:00 AM">11:00 AM</SelectItem>
-                <SelectItem value="2:00 PM">2:00 PM</SelectItem>
-                <SelectItem value="4:00 PM">4:00 PM</SelectItem>
+                <SelectItem value="09:00">9:00 AM</SelectItem>
+                <SelectItem value="10:00">10:00 AM</SelectItem>
+                <SelectItem value="11:00">11:00 AM</SelectItem>
+                <SelectItem value="14:00">2:00 PM</SelectItem>
+                <SelectItem value="15:00">3:00 PM</SelectItem>
+                <SelectItem value="16:00">4:00 PM</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Select Service */}
+          {/* Appointment Type */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
               <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H16c-.8 0-1.54.37-2.01.99L12 11l-1.99-2.01A2.5 2.5 0 0 0 8 8H5.46c-.8 0-1.54.37-2.01.99L1 15.5V22h2v-6h2.5l2.54-7.63A1.5 1.5 0 0 1 9.46 8H12c.8 0 1.54.37 2.01.99L16 11l1.99-2.01A2.5 2.5 0 0 1 20 8h2.54c.8 0 1.54.37 2.01.99L27 15.5V22h-7z"/>
               </svg>
             </div>
-            <Select onValueChange={(v) => handleChange("service", v)}>
+            <Select onValueChange={(v) => handleChange("type", v)}>
               <SelectTrigger className="pl-10">
-                <SelectValue placeholder="Select Service" />
+                <SelectValue placeholder="Appointment Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="elder-wellness">Elder Wellness</SelectItem>
-                <SelectItem value="home-care">Home Care Visits</SelectItem>
-                <SelectItem value="heart-checkup">Heart & General Checkups</SelectItem>
-                <SelectItem value="consultation">Consultation</SelectItem>
+                <SelectItem value="in-person">In-person</SelectItem>
+                <SelectItem value="online">Online Consultation</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
       </div>
 
-      {/* Additional Notes */}
+      {/* Problem Description */}
       <div className="mt-8">
         <div className="flex items-center mb-3">
           <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 24 24">
             <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
           </svg>
-          <label className="text-gray-800 font-semibold">Additional Notes</label>
+          <label className="text-gray-800 font-semibold">Problem Description</label>
         </div>
         <Textarea
-          placeholder="Any specific concerns or requirements?"
+          placeholder="Describe your symptoms and concerns..."
+          value={form.problemDescription}
+          onChange={(e) => handleChange("problemDescription", e.target.value)}
+          className="min-h-[100px]"
+          required
+        />
+      </div>
+
+      {/* Additional Notes */}
+      <div className="mt-6">
+        <div className="flex items-center mb-3">
+          <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+          </svg>
+          <label className="text-gray-800 font-semibold">Additional Notes (Optional)</label>
+        </div>
+        <Textarea
+          placeholder="Any additional information for the doctor..."
           value={form.notes}
           onChange={(e) => handleChange("notes", e.target.value)}
-          className="min-h-[100px]"
+          className="min-h-[80px]"
         />
       </div>
 
       {/* Confirm Appointment Button */}
       <Button
         type="submit"
-        className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-lg"
+        disabled={submitting || !form.doctorId}
+        className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-lg disabled:opacity-50"
       >
-        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-        </svg>
-        Confirm Appointment
+        {submitting ? (
+          <>
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Booking Appointment...
+          </>
+        ) : (
+          <>
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+            </svg>
+            Confirm Appointment
+          </>
+        )}
       </Button>
     </form>
   );

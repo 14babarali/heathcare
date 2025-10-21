@@ -1,29 +1,150 @@
 import { Search, ChevronDown, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+import { doctorService } from "@/services/doctorService";
+
+interface Doctor {
+  _id: string;
+  id: string; // Computed from _id
+  specialty: string;
+  rating: number;
+  isAvailable: boolean;
+  user?: {
+    firstName: string;
+    lastName: string;
+    profileImage?: string;
+  };
+  // Computed properties
+  name: string;
+  avatar?: string;
+}
 
 const DoctorSelection = () => {
-  const doctors = [
-    {
-      id: 1,
-      name: "Dr. Sarah Ahmed",
-      specialty: "Cardiologist",
-      rating: 4.9,
-      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face"
-    },
-    {
-      id: 2,
-      name: "Dr. Michael Chen",
-      specialty: "Dentist",
-      rating: 4.7,
-      image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face"
-    },
-    {
-      id: 3,
-      name: "Dr. Emily Rodriguez",
-      specialty: "Dermatologist",
-      rating: 4.8,
-      image: "https://images.unsplash.com/photo-1594824479561-1a0c0a92fd0e?w=150&h=150&fit=crop&crop=face"
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSpecialty, setSelectedSpecialty] = useState("All Specialties");
+  const [selectedGender, setSelectedGender] = useState("Any Gender");
+  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
+  const [isUsingFallbackData, setIsUsingFallbackData] = useState(false);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching doctors...');
+        console.log('Auth token:', localStorage.getItem('access_token'));
+        const data = await doctorService.getDoctors({ isAvailable: true });
+        console.log('Raw API response:', data);
+        console.log('API response length:', data?.length);
+        console.log('First doctor raw data:', data[0]);
+        console.log('First doctor keys:', data[0] ? Object.keys(data[0]) : 'No data');
+        
+        // Transform the API response to match our expected format
+        const transformedDoctors = data.map((doctor: any) => {
+          console.log('Processing doctor:', doctor);
+          console.log('Doctor user data:', doctor.user);
+          
+          const transformed = {
+            ...doctor,
+            id: doctor._id,
+            name: doctor.user ? `${doctor.user.firstName} ${doctor.user.lastName}` : 'Unknown Doctor',
+            avatar: doctor.user?.profileImage,
+          };
+          
+          console.log('Transformed doctor:', transformed);
+          return transformed;
+        });
+        setDoctors(transformedDoctors);
+        setIsUsingFallbackData(false);
+      } catch (error: any) {
+        console.error('Error fetching doctors:', error);
+        console.error('Error details:', error.response?.data || error.message);
+        // Set some fallback data for development
+        setIsUsingFallbackData(true);
+        setDoctors([
+          {
+            _id: '1',
+            id: '1',
+            name: 'Dr. Sarah Ahmed',
+            specialty: 'Cardiologist',
+            rating: 4.9,
+            avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face',
+            isAvailable: true
+          },
+          {
+            _id: '2',
+            id: '2',
+            name: 'Dr. Michael Chen',
+            specialty: 'Dentist',
+            rating: 4.7,
+            avatar: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150&h=150&fit=crop&crop=face',
+            isAvailable: true
+          },
+          {
+            _id: '3',
+            id: '3',
+            name: 'Dr. Emily Rodriguez',
+            specialty: 'Dermatologist',
+            rating: 4.8,
+            avatar: 'https://images.unsplash.com/photo-1594824479561-1a0c0a92fd0e?w=150&h=150&fit=crop&crop=face',
+            isAvailable: true
+          }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, []);
+
+  const filteredDoctors = doctors.filter(doctor => {
+    // Add safety checks for undefined properties
+    if (!doctor || !doctor.name || !doctor.specialty) {
+      return false;
     }
-  ];
+    
+    const matchesSearch = doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSpecialty = selectedSpecialty === "All Specialties" || 
+                           doctor.specialty.toLowerCase().includes(selectedSpecialty.toLowerCase());
+    
+    return matchesSearch && matchesSpecialty;
+  });
+
+  const handleDoctorSelect = (doctorId: string) => {
+    setSelectedDoctor(doctorId);
+    // You can add additional logic here, like storing in localStorage or context
+    localStorage.setItem('selectedDoctorId', doctorId);
+  };
+
+  if (loading) {
+    return (
+      <section className="py-16" style={{ backgroundColor: '#F0F7FF' }}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">
+              Select Your Doctor
+            </h2>
+            <p className="text-lg text-gray-600">
+              Choose from our experienced healthcare professionals
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 text-center animate-pulse">
+                <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4"></div>
+                <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/3 mx-auto mb-4"></div>
+                <div className="h-10 bg-gray-200 rounded w-full"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16" style={{ backgroundColor: '#F0F7FF' }}>
@@ -36,6 +157,13 @@ const DoctorSelection = () => {
           <p className="text-lg text-gray-600">
             Choose from our experienced healthcare professionals
           </p>
+          {isUsingFallbackData && (
+            <div className="mt-4 p-3 bg-yellow-100 border border-yellow-400 rounded-lg">
+              <p className="text-yellow-800 text-sm">
+                ⚠️ Using demo data - Backend API not available. Please ensure the backend server is running.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Search and Filter Bar */}
@@ -47,25 +175,37 @@ const DoctorSelection = () => {
               <input
                 type="text"
                 placeholder="Search by doctor or specialty..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 
             {/* Specialties Dropdown */}
             <div className="relative">
-              <select className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[180px]">
+              <select 
+                value={selectedSpecialty}
+                onChange={(e) => setSelectedSpecialty(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[180px]"
+              >
                 <option>All Specialties</option>
                 <option>Cardiology</option>
                 <option>Dentistry</option>
                 <option>Dermatology</option>
                 <option>General Medicine</option>
+                <option>Neurology</option>
+                <option>Orthopedics</option>
               </select>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
             </div>
 
             {/* Gender Dropdown */}
             <div className="relative">
-              <select className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]">
+              <select 
+                value={selectedGender}
+                onChange={(e) => setSelectedGender(e.target.value)}
+                className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-3 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
+              >
                 <option>Any Gender</option>
                 <option>Male</option>
                 <option>Female</option>
@@ -76,13 +216,36 @@ const DoctorSelection = () => {
         </div>
 
         {/* Doctor Cards */}
+        {filteredDoctors.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No doctors found matching your criteria.</p>
+            <button 
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedSpecialty("All Specialties");
+                setSelectedGender("Any Gender");
+              }}
+              className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Clear filters
+            </button>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {doctors.map((doctor) => (
-            <div key={doctor.id} className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 text-center hover:shadow-md transition-shadow">
+            {filteredDoctors.map((doctor) => (
+              <div 
+                key={doctor.id} 
+                className={`bg-white rounded-lg shadow-sm border p-6 text-center hover:shadow-md transition-all cursor-pointer ${
+                  selectedDoctor === doctor.id 
+                    ? 'border-blue-500 ring-2 ring-blue-200' 
+                    : 'border-gray-100'
+                }`}
+                onClick={() => handleDoctorSelect(doctor.id)}
+              >
               {/* Profile Picture */}
               <div className="mb-4">
                 <img
-                  src={doctor.image}
+                    src={doctor.avatar || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&crop=face"}
                   alt={doctor.name}
                   className="w-24 h-24 rounded-full object-cover mx-auto"
                 />
@@ -90,10 +253,10 @@ const DoctorSelection = () => {
 
               {/* Doctor Info */}
               <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                {doctor.name}
+                  {doctor.name || 'Unknown Doctor'}
               </h3>
               <p className="text-blue-600 font-medium mb-3">
-                {doctor.specialty}
+                  {doctor.specialty || 'General Medicine'}
               </p>
 
               {/* Rating */}
@@ -103,7 +266,7 @@ const DoctorSelection = () => {
                     <Star
                       key={i}
                       className={`w-4 h-4 ${
-                        i < Math.floor(doctor.rating)
+                          i < Math.floor(doctor.rating || 0)
                           ? "text-yellow-400 fill-current"
                           : "text-gray-300"
                       }`}
@@ -111,17 +274,28 @@ const DoctorSelection = () => {
                   ))}
                 </div>
                 <span className="ml-2 text-sm text-gray-600">
-                  {doctor.rating}
+                    {doctor.rating || 0}
                 </span>
               </div>
 
               {/* Select Button */}
-              <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                Select Doctor
+                <button 
+                  className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+                    selectedDoctor === doctor.id
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDoctorSelect(doctor.id);
+                  }}
+                >
+                  {selectedDoctor === doctor.id ? 'Selected' : 'Select Doctor'}
               </button>
             </div>
           ))}
         </div>
+        )}
       </div>
     </section>
   );

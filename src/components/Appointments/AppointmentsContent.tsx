@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
+import { useQuery } from "@tanstack/react-query";
+import { appointmentService } from "@/services/appointmentService";
 import { 
   Calendar, 
   Clock, 
@@ -13,128 +15,121 @@ import {
   MoreVertical,
   CheckCircle,
   XCircle,
-  AlertCircle,
-  Edit,
-  Trash2,
-  Eye,
   MessageSquare,
-  FileText,
-  Download
+  FileText
 } from "lucide-react";
+
+interface Appointment {
+  id: string;
+  patient?: string;
+  doctor?: string;
+  patientPhone?: string;
+  doctorSpecialty?: string;
+  date: string;
+  time: string;
+  duration: string;
+  type: string;
+  status: string;
+  notes: string;
+  symptoms?: string;
+  location?: string;
+}
 
 const AppointmentsContent = () => {
   const { user } = useAuth();
   const userRole = user?.role || "Patient";
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState("list"); // list, calendar, grid
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Mock data - in real app, this would come from API
+  // Fetch appointments based on user role
+  const { data: appointmentsData, isLoading, error } = useQuery({
+    queryKey: ['appointments', userRole, user?.id],
+    queryFn: async () => {
+      if (userRole === "Doctor") {
+        return await appointmentService.getAppointments();
+      } else if (userRole === "Patient") {
+        return await appointmentService.getAppointments();
+      } else {
+        // Administrator - get all appointments
+        return await appointmentService.getAppointments();
+      }
+    },
+    enabled: !!user?.id,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  // Transform appointments data based on role
   const getRoleSpecificData = () => {
+    const appointments = appointmentsData || [];
+    
     switch (userRole) {
       case "Administrator":
         return {
           title: "System Appointments",
           description: "Manage all system appointments and scheduling",
-          appointments: [
-            {
-              id: 1,
-              patient: "John Smith",
-              doctor: "Dr. Sarah Johnson",
-              date: "2024-01-20",
-              time: "10:00 AM",
-              duration: "30 min",
-              type: "Consultation",
-              status: "confirmed",
-              notes: "Follow-up appointment"
-            },
-            {
-              id: 2,
-              patient: "Jane Doe",
-              doctor: "Dr. Michael Brown",
-              date: "2024-01-20",
-              time: "2:00 PM",
-              duration: "45 min",
-              type: "Surgery",
-              status: "pending",
-              notes: "Pre-operative consultation"
-            }
-          ]
+          appointments: appointments.map((apt: any) => ({
+            id: apt._id,
+            patient: `${apt.patientId?.userId?.firstName || 'Unknown'} ${apt.patientId?.userId?.lastName || 'Patient'}`,
+            doctor: `${apt.doctorId?.userId?.firstName || 'Dr.'} ${apt.doctorId?.userId?.lastName || 'Unknown'}`,
+            date: new Date(apt.appointmentDate).toLocaleDateString(),
+            time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
+              hour: 'numeric', 
+              minute: '2-digit', 
+              hour12: true 
+            }),
+            duration: apt.duration || "30 min",
+            type: apt.appointmentType || "Consultation",
+            status: apt.status?.toLowerCase() || "pending",
+            notes: apt.notes || "No notes available"
+          }))
         };
       case "Doctor":
         return {
           title: "My Appointments",
           description: "Manage your patient appointments and schedule",
-          appointments: [
-            {
-              id: 1,
-              patient: "John Smith",
-              patientPhone: "+1 (555) 123-4567",
-              date: "2024-01-20",
-              time: "10:00 AM",
-              duration: "30 min",
-              type: "Consultation",
-              status: "confirmed",
-              notes: "Follow-up appointment for hypertension",
-              symptoms: "High blood pressure, headaches"
-            },
-            {
-              id: 2,
-              patient: "Jane Doe",
-              patientPhone: "+1 (555) 987-6543",
-              date: "2024-01-20",
-              time: "2:00 PM",
-              duration: "45 min",
-              type: "Surgery",
-              status: "pending",
-              notes: "Pre-operative consultation",
-              symptoms: "Chest pain, shortness of breath"
-            },
-            {
-              id: 3,
-              patient: "Bob Wilson",
-              patientPhone: "+1 (555) 456-7890",
-              date: "2024-01-21",
-              time: "9:00 AM",
-              duration: "20 min",
-              type: "Check-up",
-              status: "confirmed",
-              notes: "Annual physical examination",
-              symptoms: "Routine check-up"
-            }
-          ]
+          appointments: appointments
+            .filter((apt: any) => apt.doctorId?._id === user?.id)
+            .map((apt: any) => ({
+              id: apt._id,
+              patient: `${apt.patientId?.userId?.firstName || 'Unknown'} ${apt.patientId?.userId?.lastName || 'Patient'}`,
+              patientPhone: apt.patientId?.phoneNumber || "No phone available",
+              date: new Date(apt.appointmentDate).toLocaleDateString(),
+              time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+              }),
+              duration: apt.duration || "30 min",
+              type: apt.appointmentType || "Consultation",
+              status: apt.status?.toLowerCase() || "pending",
+              notes: apt.notes || "No notes available",
+              symptoms: apt.symptoms || "No symptoms reported"
+            }))
         };
       case "Patient":
         return {
           title: "My Appointments",
           description: "View and manage your healthcare appointments",
-          appointments: [
-            {
-              id: 1,
-              doctor: "Dr. Sarah Johnson",
-              doctorSpecialty: "Cardiologist",
-              date: "2024-01-20",
-              time: "10:00 AM",
-              duration: "30 min",
-              type: "Consultation",
-              status: "confirmed",
-              location: "Main Clinic, Room 205",
-              notes: "Follow-up appointment for heart condition"
-            },
-            {
-              id: 2,
-              doctor: "Dr. Michael Brown",
-              doctorSpecialty: "General Practitioner",
-              date: "2024-01-22",
-              time: "3:00 PM",
-              duration: "45 min",
-              type: "Check-up",
-              status: "pending",
-              location: "Main Clinic, Room 101",
-              notes: "Annual physical examination"
-            }
-          ]
+          appointments: appointments
+            .filter((apt: any) => apt.patientId?._id === user?.id)
+            .map((apt: any) => ({
+              id: apt._id,
+              doctor: `Dr. ${apt.doctorId?.userId?.firstName || 'Unknown'} ${apt.doctorId?.userId?.lastName || 'Unknown'}`,
+              doctorSpecialty: apt.doctorId?.specialty || "General Medicine",
+              date: new Date(apt.appointmentDate).toLocaleDateString(),
+              time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
+                hour: 'numeric', 
+                minute: '2-digit', 
+                hour12: true 
+              }),
+              duration: apt.duration || "30 min",
+              type: apt.appointmentType || "Consultation",
+              status: apt.status?.toLowerCase() || "pending",
+              location: apt.location || "Main Clinic",
+              notes: apt.notes || "No notes available"
+            }))
         };
       default:
         return {
@@ -167,11 +162,78 @@ const AppointmentsContent = () => {
     return icons[status as keyof typeof icons] || Clock;
   };
 
-  const filteredAppointments = data.appointments.filter(appointment =>
+  const filteredAppointments = data.appointments.filter((appointment: Appointment) =>
     (userRole === "Patient" ? appointment.doctor : appointment.patient)
-      .toLowerCase()
+      ?.toLowerCase()
       .includes(searchTerm.toLowerCase())
   );
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-2 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-96 animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+              <div className="p-6 border-b border-gray-200">
+                <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
+              </div>
+              <div className="divide-y divide-gray-200">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="p-6 animate-pulse">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                          <div>
+                            <div className="h-4 bg-gray-200 rounded w-32 mb-1"></div>
+                            <div className="h-3 bg-gray-200 rounded w-24"></div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4 mb-2">
+                          <div className="h-3 bg-gray-200 rounded w-20"></div>
+                          <div className="h-3 bg-gray-200 rounded w-16"></div>
+                          <div className="h-3 bg-gray-200 rounded w-12"></div>
+                        </div>
+                        <div className="h-3 bg-gray-200 rounded w-48"></div>
+                      </div>
+                      <div className="h-6 bg-gray-200 rounded w-20"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6">
+              <div className="h-6 bg-gray-200 rounded w-32 mb-4 animate-pulse"></div>
+              <div className="space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-red-50 rounded-lg shadow-sm p-6 border border-red-200">
+          <div className="text-red-600 text-center">
+            <p className="font-medium">Error loading appointments</p>
+            <p className="text-sm">Please try refreshing the page</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -250,7 +312,7 @@ const AppointmentsContent = () => {
               </h3>
             </div>
             <div className="divide-y divide-gray-200">
-              {filteredAppointments.map((appointment) => {
+              {filteredAppointments.map((appointment: Appointment) => {
                 const StatusIcon = getStatusIcon(appointment.status);
                 return (
                   <div

@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
+import { useQuery } from "@tanstack/react-query";
+import { messageService } from "@/services/messageService";
 import { 
   Search, 
   Filter, 
   Plus, 
   MoreVertical, 
   Star, 
-  StarOff, 
   Archive, 
   Trash2,
   Reply,
@@ -18,50 +19,50 @@ import {
   Video
 } from "lucide-react";
 
+interface Message {
+  id: string;
+  from: string;
+  to: string;
+  subject: string;
+  content: string;
+  timestamp: string;
+  isRead: boolean;
+  isStarred: boolean;
+  priority: string;
+}
+
 const MessagesContent = () => {
   const { user } = useAuth();
   const userRole = user?.role || "Patient";
-  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Mock data - in real app, this would come from API
-  const messages = [
-    {
-      id: 1,
-      from: "Dr. Sarah Johnson",
-      to: userRole === "Patient" ? "You" : "John Smith",
-      subject: "Appointment Reminder",
-      content: "Your appointment is scheduled for tomorrow at 2:00 PM. Please arrive 15 minutes early.",
-      timestamp: "2 hours ago",
-      isRead: false,
-      isStarred: false,
-      priority: "normal"
+  // Fetch messages from API
+  const { data: messagesData, isLoading, error } = useQuery({
+    queryKey: ['messages', userRole, user?.id],
+    queryFn: async () => {
+      return await messageService.getMyMessages();
     },
-    {
-      id: 2,
-      from: userRole === "Patient" ? "Dr. Michael Brown" : "Patient",
-      to: userRole === "Patient" ? "You" : "Dr. Sarah Johnson",
-      subject: "Prescription Update",
-      content: "Your prescription has been updated. Please check your patient portal for details.",
-      timestamp: "4 hours ago",
-      isRead: true,
-      isStarred: true,
-      priority: "high"
-    },
-    {
-      id: 3,
-      from: "System Administrator",
-      to: "All Users",
-      subject: "System Maintenance",
-      content: "Scheduled maintenance will occur tonight from 11 PM to 1 AM. Some features may be unavailable.",
-      timestamp: "1 day ago",
-      isRead: true,
-      isStarred: false,
-      priority: "normal"
-    }
-  ];
+    enabled: !!user?.id,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
 
-  const filteredMessages = messages.filter(message =>
+  // Transform messages data
+  const messages = (messagesData || []).map((msg: any) => ({
+    id: msg._id,
+    from: userRole === "Patient" 
+      ? `Dr. ${msg.senderId?.userId?.firstName || 'Unknown'} ${msg.senderId?.userId?.lastName || 'Doctor'}`
+      : `${msg.senderId?.userId?.firstName || 'Unknown'} ${msg.senderId?.userId?.lastName || 'User'}`,
+    to: userRole === "Patient" ? "You" : `${msg.recipientId?.userId?.firstName || 'Unknown'} ${msg.recipientId?.userId?.lastName || 'User'}`,
+    subject: msg.subject || "No Subject",
+    content: msg.content || "No content available",
+    timestamp: new Date(msg.createdAt).toLocaleString(),
+    isRead: msg.isRead || false,
+    isStarred: msg.isStarred || false,
+    priority: msg.priority || "normal"
+  }));
+
+  const filteredMessages = messages.filter((message: Message) =>
     message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
     message.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -91,6 +92,63 @@ const MessagesContent = () => {
         return "Your messages";
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-6">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-2 animate-pulse"></div>
+          <div className="h-4 bg-gray-200 rounded w-96 animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
+          <div className="lg:col-span-1 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-4 border-b border-gray-200">
+              <div className="h-10 bg-gray-200 rounded mb-3 animate-pulse"></div>
+              <div className="h-10 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div className="p-4 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-4 border border-gray-100 rounded animate-pulse">
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-32 mb-1"></div>
+                      <div className="h-3 bg-gray-200 rounded w-48"></div>
+                    </div>
+                    <div className="h-4 bg-gray-200 rounded w-4"></div>
+                  </div>
+                  <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-24"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6">
+              <div className="h-6 bg-gray-200 rounded w-48 mb-4 animate-pulse"></div>
+              <div className="space-y-4">
+                <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-red-50 rounded-lg shadow-sm p-6 border border-red-200">
+          <div className="text-red-600 text-center">
+            <p className="font-medium">Error loading messages</p>
+            <p className="text-sm">Please try refreshing the page</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -132,7 +190,7 @@ const MessagesContent = () => {
 
           {/* Messages List */}
           <div className="flex-1 overflow-y-auto">
-            {filteredMessages.map((message) => (
+            {filteredMessages.map((message: Message) => (
               <div
                 key={message.id}
                 className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 ${
