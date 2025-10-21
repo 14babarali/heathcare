@@ -3,6 +3,8 @@ import AdminHeader from "@/components/Admin/AdminHeader";
 import ProfileInformation from "@/components/Settings/ProfileInformation";
 import NotificationPreferences from "@/components/Settings/NotificationPreferences";
 import DoctorSettings from "@/components/Settings/DoctorSettings";
+import AdministratorSettings from "@/components/Settings/AdministratorSettings";
+import PatientSettings from "@/components/Settings/PatientSettings";
 import PrivacySecurity from "@/components/Settings/PrivacySecurity";
 import HelpSupport from "@/components/Settings/HelpSupport";
 import { useState, useEffect } from "react";
@@ -60,6 +62,8 @@ export default function Settings() {
               <ProfileInformation />
               <NotificationPreferences />
               <DoctorSettings />
+              <AdministratorSettings />
+              <PatientSettings />
               <PrivacySecurity />
               <HelpSupport />
             </div>

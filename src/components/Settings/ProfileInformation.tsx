@@ -1,6 +1,9 @@
 import { User, Camera, Calendar, ChevronDown } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
 
 const ProfileInformation = () => {
+  const { user } = useAuth();
+  const userRole = user?.role || "Patient";
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       {/* Section Header */}
@@ -101,17 +104,33 @@ const ProfileInformation = () => {
               </div>
             </div>
 
-            {/* Role */}
+            {/* Role - Show different options based on user role */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Role
               </label>
               <div className="relative">
                 <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white">
-                  <option>Doctor - Cardiologist</option>
-                  <option>Doctor - General</option>
-                  <option>Nurse</option>
-                  <option>Administrator</option>
+                  {userRole === "Administrator" && (
+                    <>
+                      <option>Administrator</option>
+                      <option>System Administrator</option>
+                    </>
+                  )}
+                  {userRole === "Doctor" && (
+                    <>
+                      <option>Doctor - Cardiologist</option>
+                      <option>Doctor - General</option>
+                      <option>Doctor - Surgeon</option>
+                      <option>Doctor - Pediatrician</option>
+                    </>
+                  )}
+                  {userRole === "Patient" && (
+                    <>
+                      <option>Patient</option>
+                      <option>VIP Patient</option>
+                    </>
+                  )}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>

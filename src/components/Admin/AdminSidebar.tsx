@@ -67,13 +67,13 @@ const AdminSidebar = ({ onToggle, isMobile = false }: AdminSidebarProps) => {
       { name: "Appointments", icon: <Calendar className="w-5 h-5" />, path: "/Doctor/appointments", description: "My Schedule" },
       { name: "Messages", icon: <Mail className="w-5 h-5" />, path: "/Doctor/messages", description: "Patient Communications" },
       { name: "Reports", icon: <BarChart3 className="w-5 h-5" />, path: "/Doctor/reports", description: "Performance Analytics" },
-      { name: "Settings", icon: <Cog className="w-5 h-5" />, path: "/Administrator/settings", description: "Profile & Preferences" },
+      { name: "Settings", icon: <Cog className="w-5 h-5" />, path: "/Doctor/settings", description: "Profile & Preferences" },
     ],
     Patient: [
       { name: "Dashboard", icon: <Home className="w-5 h-5" />, path: "/Patient", description: "Health Overview" },
       { name: "Appointments", icon: <Calendar className="w-5 h-5" />, path: "/appointment", description: "My Appointments" },
       { name: "Messages", icon: <Mail className="w-5 h-5" />, path: "/Patient/messages", description: "Doctor Communications" },
-      { name: "Settings", icon: <Cog className="w-5 h-5" />, path: "/Administrator/settings", description: "Account Settings" },
+      { name: "Settings", icon: <Cog className="w-5 h-5" />, path: "/Patient/settings", description: "Account Settings" },
     ]
   };
 

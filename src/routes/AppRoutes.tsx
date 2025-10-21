@@ -55,10 +55,26 @@ export default function AppRoutes() {
           } 
         />
         <Route 
+          path="/Doctor/settings" 
+          element={
+            <ProtectedRoute allowedRoles={['Doctor']}>
+              <Settings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
           path="/Patient" 
           element={
             <ProtectedRoute allowedRoles={['Patient']}>
               <PatientPanel />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Patient/settings" 
+          element={
+            <ProtectedRoute allowedRoles={['Patient']}>
+              <Settings />
             </ProtectedRoute>
           } 
         />

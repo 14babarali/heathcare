@@ -1,6 +1,14 @@
 import { Stethoscope, ChevronDown, Plus, X } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
 
 const DoctorSettings = () => {
+  const { user } = useAuth();
+  const userRole = user?.role || "Patient";
+
+  // Only show doctor settings for doctors
+  if (userRole !== "Doctor") {
+    return null;
+  }
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       {/* Section Header */}
