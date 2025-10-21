@@ -38,7 +38,39 @@ export default function AppointmentForm() {
       try {
         setLoading(true);
         const data = await doctorService.getDoctors({ isAvailable: true });
-        setDoctors(data);
+        
+        // Transform the API response to match our expected format
+        const transformedDoctors = data.map((doctor: any) => {
+          // Handle different possible data structures
+          let doctorName = 'Unknown Doctor';
+          let doctorAvatar = undefined;
+          
+          if (doctor.user) {
+            // If user data is populated
+            doctorName = `${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
+            doctorAvatar = doctor.user.profileImage;
+          } else if (doctor.firstName && doctor.lastName) {
+            // If user data is not populated but doctor has name fields directly
+            doctorName = `${doctor.firstName} ${doctor.lastName}`;
+          } else if (doctor.name) {
+            // If doctor already has a name field
+            doctorName = doctor.name;
+          }
+          
+          // Fallback to a more descriptive name if still unknown
+          if (doctorName === 'Unknown Doctor' || !doctorName) {
+            doctorName = `Dr. ${doctor.specialty || 'Medical Professional'}`;
+          }
+          
+          return {
+            ...doctor,
+            id: doctor._id,
+            name: doctorName,
+            avatar: doctorAvatar,
+          };
+        });
+        
+        setDoctors(transformedDoctors);
       } catch (error) {
         console.error('Error fetching doctors:', error);
       } finally {

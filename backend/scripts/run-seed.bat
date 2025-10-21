@@ -1,5 +1,5 @@
 @echo off
-echo Running admin user seeding script...
+echo Running comprehensive database seeding script...
 cd /d "%~dp0.."
-npm run seed:admin
+npm run seed:comprehensive
 pause

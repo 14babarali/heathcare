@@ -1,4 +1,4 @@
 #!/bin/bash
-echo "Running admin user seeding script..."
+echo "Running comprehensive database seeding script..."
 cd "$(dirname "$0")/.."
-npm run seed:admin
+npm run seed:comprehensive

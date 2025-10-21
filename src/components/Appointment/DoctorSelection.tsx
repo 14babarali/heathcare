@@ -1,6 +1,7 @@
 import { Search, ChevronDown, Star } from "lucide-react";
 import { useState, useEffect } from "react";
 import { doctorService } from "@/services/doctorService";
+import { useAppointmentBooking } from "@/contexts/AppointmentBookingContext";
 
 interface Doctor {
   _id: string;
@@ -19,12 +20,12 @@ interface Doctor {
 }
 
 const DoctorSelection = () => {
+  const { state, dispatch } = useAppointmentBooking();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("All Specialties");
   const [selectedGender, setSelectedGender] = useState("Any Gender");
-  const [selectedDoctor, setSelectedDoctor] = useState<string | null>(null);
   const [isUsingFallbackData, setIsUsingFallbackData] = useState(false);
 
   useEffect(() => {
@@ -44,11 +45,32 @@ const DoctorSelection = () => {
           console.log('Processing doctor:', doctor);
           console.log('Doctor user data:', doctor.user);
           
+          // Handle different possible data structures
+          let doctorName = 'Unknown Doctor';
+          let doctorAvatar = undefined;
+          
+          if (doctor.user) {
+            // If user data is populated
+            doctorName = `${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
+            doctorAvatar = doctor.user.profileImage;
+          } else if (doctor.firstName && doctor.lastName) {
+            // If user data is not populated but doctor has name fields directly
+            doctorName = `${doctor.firstName} ${doctor.lastName}`;
+          } else if (doctor.name) {
+            // If doctor already has a name field
+            doctorName = doctor.name;
+          }
+          
+          // Fallback to a more descriptive name if still unknown
+          if (doctorName === 'Unknown Doctor' || !doctorName) {
+            doctorName = `Dr. ${doctor.specialty || 'Medical Professional'}`;
+          }
+          
           const transformed = {
             ...doctor,
             id: doctor._id,
-            name: doctor.user ? `${doctor.user.firstName} ${doctor.user.lastName}` : 'Unknown Doctor',
-            avatar: doctor.user?.profileImage,
+            name: doctorName,
+            avatar: doctorAvatar,
           };
           
           console.log('Transformed doctor:', transformed);
@@ -112,10 +134,8 @@ const DoctorSelection = () => {
     return matchesSearch && matchesSpecialty;
   });
 
-  const handleDoctorSelect = (doctorId: string) => {
-    setSelectedDoctor(doctorId);
-    // You can add additional logic here, like storing in localStorage or context
-    localStorage.setItem('selectedDoctorId', doctorId);
+  const handleDoctorSelect = (doctor: Doctor) => {
+    dispatch({ type: 'SELECT_DOCTOR', payload: doctor });
   };
 
   if (loading) {
@@ -236,11 +256,11 @@ const DoctorSelection = () => {
               <div 
                 key={doctor.id} 
                 className={`bg-white rounded-lg shadow-sm border p-6 text-center hover:shadow-md transition-all cursor-pointer ${
-                  selectedDoctor === doctor.id 
+                  state.formData.selectedDoctor?.id === doctor.id 
                     ? 'border-blue-500 ring-2 ring-blue-200' 
                     : 'border-gray-100'
                 }`}
-                onClick={() => handleDoctorSelect(doctor.id)}
+                onClick={() => handleDoctorSelect(doctor)}
               >
               {/* Profile Picture */}
               <div className="mb-4">
@@ -253,7 +273,7 @@ const DoctorSelection = () => {
 
               {/* Doctor Info */}
               <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                  {doctor.name || 'Unknown Doctor'}
+                  {doctor.name}
               </h3>
               <p className="text-blue-600 font-medium mb-3">
                   {doctor.specialty || 'General Medicine'}
@@ -281,16 +301,16 @@ const DoctorSelection = () => {
               {/* Select Button */}
                 <button 
                   className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
-                    selectedDoctor === doctor.id
+                    state.formData.selectedDoctor?.id === doctor.id
                       ? 'bg-green-600 text-white hover:bg-green-700'
                       : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDoctorSelect(doctor.id);
+                    handleDoctorSelect(doctor);
                   }}
                 >
-                  {selectedDoctor === doctor.id ? 'Selected' : 'Select Doctor'}
+                  {state.formData.selectedDoctor?.id === doctor.id ? 'Selected' : 'Select Doctor'}
               </button>
             </div>
           ))}

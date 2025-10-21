@@ -62,6 +62,10 @@ export class DoctorsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get doctor by ID' })
   findOne(@Param('id') id: string) {
+    // Validate that id is a valid MongoDB ObjectId format
+    if (!id || id === '[object Object]' || !/^[0-9a-fA-F]{24}$/.test(id)) {
+      throw new Error('Invalid doctor ID format');
+    }
     return this.doctorsService.findOne(id);
   }
 
@@ -70,12 +74,20 @@ export class DoctorsController {
   @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Update doctor (Admin only)' })
   update(@Param('id') id: string, @Body() updateData: any) {
+    // Validate that id is a valid MongoDB ObjectId format
+    if (!id || id === '[object Object]' || !/^[0-9a-fA-F]{24}$/.test(id)) {
+      throw new Error('Invalid doctor ID format');
+    }
     return this.doctorsService.update(id, updateData);
   }
 
   @Patch(':id/rating')
   @ApiOperation({ summary: 'Update doctor rating' })
   updateRating(@Param('id') id: string, @Body() body: { rating: number }) {
+    // Validate that id is a valid MongoDB ObjectId format
+    if (!id || id === '[object Object]' || !/^[0-9a-fA-F]{24}$/.test(id)) {
+      throw new Error('Invalid doctor ID format');
+    }
     return this.doctorsService.updateRating(id, body.rating);
   }
 }

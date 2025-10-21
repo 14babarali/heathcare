@@ -22,59 +22,99 @@ export class DoctorsService {
       ];
     }
 
-    const doctors = await this.doctorModel.find(query).populate('userId').exec();
-    
-    // Populate user details for each doctor
-    for (const doctor of doctors) {
-      if (doctor.userId) {
-        const user = await this.userModel.findById(doctor.userId).select('-password').exec();
-        doctor.user = user;
-      }
-    }
+    // Use populate to get user data directly
+    const doctors = await this.doctorModel
+      .find(query)
+      .populate({
+        path: 'userId',
+        select: '-password', // Exclude password field
+        model: 'User'
+      })
+      .exec();
 
-    return doctors;
+    // Transform the data to include user information in a 'user' field
+    const doctorsWithUser = doctors.map(doctor => {
+      const doctorObj = doctor.toObject();
+      if (doctorObj.userId && typeof doctorObj.userId === 'object') {
+        doctorObj.user = doctorObj.userId as any;
+        delete doctorObj.userId; // Remove the userId field to avoid confusion
+      }
+      return doctorObj;
+    });
+
+    return doctorsWithUser;
   }
 
   async findOne(id: string) {
-    const doctor = await this.doctorModel.findById(id).populate('userId').exec();
+    const doctor = await this.doctorModel
+      .findById(id)
+      .populate({
+        path: 'userId',
+        select: '-password',
+        model: 'User'
+      })
+      .exec();
+    
     if (!doctor) {
       throw new NotFoundException('Doctor not found');
     }
 
-    if (doctor.userId) {
-      const user = await this.userModel.findById(doctor.userId).select('-password').exec();
-      doctor.user = user;
+    // Transform the data to include user information in a 'user' field
+    const doctorObj = doctor.toObject();
+    if (doctorObj.userId && typeof doctorObj.userId === 'object') {
+      doctorObj.user = doctorObj.userId as any;
+      delete doctorObj.userId; // Remove the userId field to avoid confusion
     }
 
-    return doctor;
+    return doctorObj;
   }
 
   async findByUserId(userId: string) {
-    const doctor = await this.doctorModel.findOne({ userId }).populate('userId').exec();
+    const doctor = await this.doctorModel
+      .findOne({ userId })
+      .populate({
+        path: 'userId',
+        select: '-password',
+        model: 'User'
+      })
+      .exec();
+    
     if (!doctor) {
       throw new NotFoundException('Doctor not found');
     }
 
-    if (doctor.userId) {
-      const user = await this.userModel.findById(doctor.userId).select('-password').exec();
-      doctor.user = user;
+    // Transform the data to include user information in a 'user' field
+    const doctorObj = doctor.toObject();
+    if (doctorObj.userId && typeof doctorObj.userId === 'object') {
+      doctorObj.user = doctorObj.userId as any;
+      delete doctorObj.userId; // Remove the userId field to avoid confusion
     }
 
-    return doctor;
+    return doctorObj;
   }
 
   async update(id: string, updateData: any) {
-    const doctor = await this.doctorModel.findByIdAndUpdate(id, updateData, { new: true }).populate('userId').exec();
+    const doctor = await this.doctorModel
+      .findByIdAndUpdate(id, updateData, { new: true })
+      .populate({
+        path: 'userId',
+        select: '-password',
+        model: 'User'
+      })
+      .exec();
+    
     if (!doctor) {
       throw new NotFoundException('Doctor not found');
     }
 
-    if (doctor.userId) {
-      const user = await this.userModel.findById(doctor.userId).select('-password').exec();
-      doctor.user = user;
+    // Transform the data to include user information in a 'user' field
+    const doctorObj = doctor.toObject();
+    if (doctorObj.userId && typeof doctorObj.userId === 'object') {
+      doctorObj.user = doctorObj.userId as any;
+      delete doctorObj.userId; // Remove the userId field to avoid confusion
     }
 
-    return doctor;
+    return doctorObj;
   }
 
   async updateAvailability(id: string, isAvailable: boolean) {

@@ -1,6 +1,10 @@
 import { Upload, X, FileText } from "lucide-react";
+import { useAppointmentBooking } from "@/contexts/AppointmentBookingContext";
+import { useRef } from "react";
 
 const ProblemDescription = () => {
+  const { state, dispatch } = useAppointmentBooking();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   return (
     <section className="py-16" style={{ backgroundColor: '#F0F7FF' }}>
       <div className="max-w-6xl mx-auto px-6">
@@ -25,6 +29,8 @@ const ProblemDescription = () => {
             <div className="mb-6">
               <textarea
                 placeholder="Describe your symptoms, duration, or any discomfort you're feeling..."
+                value={state.formData.problemDescription}
+                onChange={(e) => dispatch({ type: 'UPDATE_PROBLEM_DESCRIPTION', payload: { problemDescription: e.target.value } })}
                 className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
             </div>
@@ -36,6 +42,8 @@ const ProblemDescription = () => {
               </label>
               <textarea
                 placeholder="Any details you want your doctor to know before the appointment?"
+                value={state.formData.noteToDoctor}
+                onChange={(e) => dispatch({ type: 'UPDATE_PROBLEM_DESCRIPTION', payload: { noteToDoctor: e.target.value } })}
                 className="w-full h-24 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
             </div>
@@ -48,7 +56,24 @@ const ProblemDescription = () => {
             </h3>
             
             {/* Upload Area */}
-            <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center mb-4 hover:border-blue-400 transition-colors cursor-pointer">
+            <div 
+              className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center mb-4 hover:border-blue-400 transition-colors cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".jpg,.jpeg,.png,.pdf"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    Array.from(e.target.files).forEach(file => {
+                      dispatch({ type: 'ADD_UPLOADED_FILE', payload: file });
+                    });
+                  }
+                }}
+                className="hidden"
+              />
               <Upload className="w-12 h-12 text-blue-500 mx-auto mb-4" />
               <p className="text-lg font-medium text-gray-700 mb-2">
                 Upload X-rays, Reports, or Images
@@ -63,20 +88,32 @@ const ProblemDescription = () => {
 
             {/* Uploaded Files List */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                <div className="flex items-center">
-                  <FileText className="w-5 h-5 text-red-500 mr-3" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">
-                      blood-test-results.pdf
-                    </p>
-                    <p className="text-xs text-gray-500">2.4 MB</p>
+              {state.formData.uploadedFiles.map((file, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center">
+                    <FileText className="w-5 h-5 text-red-500 mr-3" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {(file.size / (1024 * 1024)).toFixed(1)} MB
+                      </p>
+                    </div>
                   </div>
+                  <button 
+                    onClick={() => dispatch({ type: 'REMOVE_UPLOADED_FILE', payload: index })}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
-                <button className="text-red-500 hover:text-red-700">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+              ))}
+              {state.formData.uploadedFiles.length === 0 && (
+                <p className="text-gray-500 text-sm text-center py-4">
+                  No files uploaded yet
+                </p>
+              )}
             </div>
 
             {/* Doctor Illustration */}

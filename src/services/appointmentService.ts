@@ -2,12 +2,11 @@ import api from '@/lib/api';
 
 export interface CreateAppointmentRequest {
   doctorId: string;
-  patientId: string;
   appointmentDate: string;
-  appointmentTime: string;
-  type: 'consultation' | 'follow-up' | 'emergency';
-  reason: string;
-  notes?: string;
+  startTime: string;
+  endTime: string;
+  type: 'in-person' | 'online';
+  problemDescription?: string;
 }
 
 export interface UpdateAppointmentRequest {

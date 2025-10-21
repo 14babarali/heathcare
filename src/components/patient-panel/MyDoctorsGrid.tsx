@@ -46,13 +46,54 @@ export default function MyDoctorsGrid() {
         setLoading(true);
         // Get doctors that the patient has appointments with
         const appointments = await appointmentService.getAppointments();
-        const doctorIds = [...new Set(appointments.map((apt: any) => apt.doctorId))];
+        const doctorIds = [...new Set(appointments.map((apt: any) => {
+          // Handle both string IDs and populated objects
+          if (typeof apt.doctorId === 'string') {
+            return apt.doctorId;
+          } else if (apt.doctorId && apt.doctorId._id) {
+            return apt.doctorId._id;
+          } else if (apt.doctorId && apt.doctorId.id) {
+            return apt.doctorId.id;
+          }
+          return null;
+        }).filter(Boolean))];
         
         // Fetch doctor details for each unique doctor
         const doctorPromises = doctorIds.map((doctorId: string) => doctorService.getDoctor(doctorId));
         const doctorData = await Promise.all(doctorPromises);
         
-        setDoctors(doctorData);
+        // Transform the doctor data to ensure proper name display
+        const transformedDoctors = doctorData.map((doctor: any) => {
+          // Handle different possible data structures
+          let doctorName = 'Unknown Doctor';
+          let doctorAvatar = undefined;
+          
+          if (doctor.user) {
+            // If user data is populated
+            doctorName = `${doctor.user.firstName || ''} ${doctor.user.lastName || ''}`.trim();
+            doctorAvatar = doctor.user.profileImage;
+          } else if (doctor.firstName && doctor.lastName) {
+            // If user data is not populated but doctor has name fields directly
+            doctorName = `${doctor.firstName} ${doctor.lastName}`;
+          } else if (doctor.name) {
+            // If doctor already has a name field
+            doctorName = doctor.name;
+          }
+          
+          // Fallback to a more descriptive name if still unknown
+          if (doctorName === 'Unknown Doctor' || !doctorName) {
+            doctorName = `Dr. ${doctor.specialty || 'Medical Professional'}`;
+          }
+          
+          return {
+            ...doctor,
+            id: doctor._id,
+            name: doctorName,
+            avatar: doctorAvatar,
+          };
+        });
+        
+        setDoctors(transformedDoctors);
       } catch (error) {
         console.error('Error fetching my doctors:', error);
       } finally {

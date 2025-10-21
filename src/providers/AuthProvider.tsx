@@ -46,19 +46,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (credentials: LoginRequest) => {
     try {
-      // Try the new email-only login first
-      const response = await authService.loginByEmail(credentials.email, credentials.password);
+      const response = await authService.login(credentials);
       localStorage.setItem('access_token', response.access_token);
       setUser(response.user);
     } catch (error) {
-      // Fallback to role-based login if email-only fails
-      try {
-        const response = await authService.login(credentials);
-        localStorage.setItem('access_token', response.access_token);
-        setUser(response.user);
-      } catch (fallbackError) {
-        throw fallbackError;
-      }
+      console.error('Login error:', error);
+      throw error;
     }
   };
 

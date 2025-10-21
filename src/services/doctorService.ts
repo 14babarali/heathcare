@@ -55,18 +55,57 @@ export const doctorService = {
     return response.data;
   },
 
-  async getDoctor(id: string) {
-    const response = await api.get(`/doctors/${id}`);
+  async getDoctor(id: string | any) {
+    // Ensure id is a string and not an object
+    let doctorId: string;
+    if (typeof id === 'string') {
+      doctorId = id;
+    } else if (id && typeof id === 'object') {
+      doctorId = id._id || id.id || String(id);
+    } else {
+      doctorId = String(id);
+    }
+    
+    if (!doctorId) {
+      throw new Error('Invalid doctor ID provided');
+    }
+    const response = await api.get(`/doctors/${doctorId}`);
     return response.data;
   },
 
-  async updateDoctor(id: string, data: UpdateDoctorRequest) {
-    const response = await api.patch(`/doctors/${id}`, data);
+  async updateDoctor(id: string | any, data: UpdateDoctorRequest) {
+    // Ensure id is a string and not an object
+    let doctorId: string;
+    if (typeof id === 'string') {
+      doctorId = id;
+    } else if (id && typeof id === 'object') {
+      doctorId = id._id || id.id || String(id);
+    } else {
+      doctorId = String(id);
+    }
+    
+    if (!doctorId) {
+      throw new Error('Invalid doctor ID provided');
+    }
+    const response = await api.patch(`/doctors/${doctorId}`, data);
     return response.data;
   },
 
-  async updateRating(id: string, rating: number) {
-    const response = await api.patch(`/doctors/${id}/rating`, { rating });
+  async updateRating(id: string | any, rating: number) {
+    // Ensure id is a string and not an object
+    let doctorId: string;
+    if (typeof id === 'string') {
+      doctorId = id;
+    } else if (id && typeof id === 'object') {
+      doctorId = id._id || id.id || String(id);
+    } else {
+      doctorId = String(id);
+    }
+    
+    if (!doctorId) {
+      throw new Error('Invalid doctor ID provided');
+    }
+    const response = await api.patch(`/doctors/${doctorId}/rating`, { rating });
     return response.data;
   },
 };

@@ -11,12 +11,11 @@ import type {
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const response = await api.post('/auth/login', credentials);
-    return response.data;
-  },
-
-  async loginByEmail(email: string, password: string): Promise<AuthResponse> {
-    const response = await api.post('/auth/login-email', { email, password });
+    // Use login-email endpoint that automatically detects role
+    const response = await api.post('/auth/login-email', {
+      email: credentials.email,
+      password: credentials.password
+    });
     return response.data;
   },
 
