@@ -82,6 +82,29 @@ export class DashboardService {
       },
     ]);
 
+    // Get daily appointment trends for the last 7 days
+    const dailyTrends = await this.appointmentModel.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            dayOfWeek: { $dayOfWeek: '$createdAt' },
+            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { '_id.date': 1 },
+      },
+    ]);
+
     return {
       metrics: {
         totalPatients,
@@ -92,6 +115,7 @@ export class DashboardService {
       },
       appointmentStats,
       monthlyTrends,
+      dailyTrends,
       recentAppointments,
     };
   }
@@ -137,6 +161,30 @@ export class DashboardService {
       .limit(5)
       .exec();
 
+    // Get daily appointment trends for the doctor for the last 7 days
+    const dailyTrends = await this.appointmentModel.aggregate([
+      {
+        $match: {
+          doctorId,
+          createdAt: {
+            $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            dayOfWeek: { $dayOfWeek: '$createdAt' },
+            date: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { '_id.date': 1 },
+      },
+    ]);
+
     return {
       metrics: {
         totalAppointments,
@@ -145,6 +193,7 @@ export class DashboardService {
         cancelledAppointments,
         unreadMessages,
       },
+      dailyTrends,
       upcomingAppointments,
       recentAppointments,
       patientFeedback,
