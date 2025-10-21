@@ -16,6 +16,10 @@ export const SCREEN_PATH = {
     pathname: '/book',
     key: 'book',
   },
+  APPOINTMENT: {
+    pathname: '/appointment',
+    key: 'appointment',
+  },
   CONTACT: {
     pathname: '/contact',
     key: 'contact',

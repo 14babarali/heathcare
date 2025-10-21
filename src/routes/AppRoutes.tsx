@@ -1,7 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Home from '@/pages/Home';
 import BookAppointment from '@/pages/BookAppointment';
-import AppointmentBooking from '@/pages/AppointmentBooking';
 import AdminDashboard from '@/pages/AdminDashboard';
 import Settings from '@/pages/Settings';
 import PatientPanel from '@/pages/PatientPanel';
@@ -11,6 +10,7 @@ import Signup from '@/pages/auth/Signup';
 import Forgot from '@/pages/auth/Forgot';
 import Reset from '@/pages/auth/Reset';
 import PublicHeader from '@/layout/Header/PublicHeader';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 // Placeholder components for routes that don't exist yet
 const Services = () => (
@@ -29,29 +29,77 @@ export default function AppRoutes() {
   return (
     <>
       <Routes>
-        {/* Stakeholder dashboards */}
-        <Route path="/Administrator" element={<AdminDashboard />} />
-        <Route path="/Administrator/settings" element={<Settings />} />
-        <Route path="/Doctor" element={<DoctorPlan />} />
-        <Route path="/Patient" element={<PatientPanel />} />
+        {/* Protected Stakeholder dashboards */}
+        <Route 
+          path="/Administrator" 
+          element={
+            <ProtectedRoute allowedRoles={['Administrator']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Administrator/settings" 
+          element={
+            <ProtectedRoute allowedRoles={['Administrator']}>
+              <Settings />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Doctor" 
+          element={
+            <ProtectedRoute allowedRoles={['Doctor']}>
+              <DoctorPlan />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Patient" 
+          element={
+            <ProtectedRoute allowedRoles={['Patient']}>
+              <PatientPanel />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/appointment" 
+          element={
+            <ProtectedRoute allowedRoles={['Patient']}>
+              <PatientPanel />
+            </ProtectedRoute>
+          } 
+        />
 
-        {/* Auth */}
+        {/* Auth - Public routes */}
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/signup" element={<Signup />} />
         <Route path="/auth/forgot" element={<Forgot />} />
         <Route path="/auth/reset" element={<Reset />} />
 
         {/* Public site */}
-        <Route path="/*" element={
+        <Route path="/" element={
           <>
             <PublicHeader />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/book" element={<BookAppointment />} />
-              <Route path="/appointment" element={<AppointmentBooking />} />
-              <Route path="/contact" element={<Contact />} />
-            </Routes>
+            <Home />
+          </>
+        } />
+        <Route path="/services" element={
+          <>
+            <PublicHeader />
+            <Services />
+          </>
+        } />
+        <Route path="/book" element={
+          <>
+            <PublicHeader />
+            <BookAppointment />
+          </>
+        } />
+        <Route path="/contact" element={
+          <>
+            <PublicHeader />
+            <Contact />
           </>
         } />
       </Routes>

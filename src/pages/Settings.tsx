@@ -5,29 +5,58 @@ import NotificationPreferences from "@/components/Settings/NotificationPreferenc
 import DoctorSettings from "@/components/Settings/DoctorSettings";
 import PrivacySecurity from "@/components/Settings/PrivacySecurity";
 import HelpSupport from "@/components/Settings/HelpSupport";
+import { useState, useEffect } from "react";
 
 export default function Settings() {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleMenuToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <AdminSidebar />
+    <div className="h-screen bg-gray-50 flex overflow-hidden">
+      {/* Fixed Sidebar */}
+      <div className="flex-shrink-0">
+        <AdminSidebar 
+          isOpen={isSidebarOpen}
+          onToggle={handleMenuToggle}
+          isMobile={isMobile}
+        />
+      </div>
       
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <AdminHeader />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Fixed Header */}
+        <div className="flex-shrink-0">
+          <AdminHeader 
+            onMenuToggle={handleMenuToggle}
+            isMobile={isMobile}
+          />
+        </div>
         
-        {/* Settings Content */}
-        <main className="flex-1 p-6 overflow-y-auto">
+        {/* Scrollable Settings Content */}
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="max-w-4xl mx-auto">
             {/* Page Header */}
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Settings</h1>
+            <div className="mb-6 lg:mb-8">
+              <h1 className="text-2xl lg:text-3xl font-bold text-gray-800 mb-2">Settings</h1>
               <p className="text-gray-600">Customize your healthcare experience</p>
             </div>
 
             {/* Settings Sections */}
-            <div className="space-y-6">
+            <div className="space-y-4 lg:space-y-6">
               <ProfileInformation />
               <NotificationPreferences />
               <DoctorSettings />
