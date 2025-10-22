@@ -9,6 +9,7 @@ import Appointments from '@/pages/Appointments';
 import PatientPanel from '@/pages/PatientPanel';
 import DoctorPlan from '@/pages/DoctorPlan';
 import AdministratorPatients from '@/pages/AdministratorPatients';
+import TestMobile from '@/pages/TestMobile';
 import Login from '@/pages/auth/Login';
 import Signup from '@/pages/auth/Signup';
 import Forgot from '@/pages/auth/Forgot';
@@ -202,6 +203,9 @@ export default function AppRoutes() {
             <Contact />
           </>
         } />
+        
+        {/* Test route */}
+        <Route path="/test-mobile" element={<TestMobile />} />
       </Routes>
     </>
   );

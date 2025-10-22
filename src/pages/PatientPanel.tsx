@@ -15,7 +15,9 @@ export default function PatientPanel() {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
+      // Use more responsive breakpoints
+      const isMobileView = window.innerWidth < 1024;
+      setIsMobile(isMobileView);
     };
     
     checkMobile();
@@ -45,9 +47,9 @@ export default function PatientPanel() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-b from-blue-50 to-white flex overflow-hidden">
+    <div className="h-screen bg-gradient-to-b from-blue-50 to-white flex overflow-hidden relative">
       {/* Fixed Sidebar */}
-      <div className="flex-shrink-0">
+      <div className={`flex-shrink-0 ${isMobile ? 'absolute inset-y-0 left-0 z-50' : ''}`}>
         <AdminSidebar 
           isOpen={isSidebarOpen}
           onToggle={handleMenuToggle}
@@ -56,9 +58,9 @@ export default function PatientPanel() {
       </div>
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Fixed Header */}
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 z-40">
           <AdminHeader 
             onMenuToggle={handleMenuToggle}
             isMobile={isMobile}
@@ -66,7 +68,7 @@ export default function PatientPanel() {
         </div>
         
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
           {renderContent()}
         </main>
       </div>
