@@ -87,11 +87,27 @@ export class PatientsController {
     return this.patientsService.findOne(id);
   }
 
+  @Post()
+  @Roles(UserRole.ADMINISTRATOR)
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Create new patient (Admin only)' })
+  create(@Body() createData: any) {
+    return this.patientsService.create(createData);
+  }
+
   @Patch(':id')
   @Roles(UserRole.ADMINISTRATOR)
   @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Update patient (Admin only)' })
   update(@Param('id') id: string, @Body() updateData: any) {
     return this.patientsService.update(id, updateData);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.ADMINISTRATOR)
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Delete patient (Admin only)' })
+  remove(@Param('id') id: string) {
+    return this.patientsService.remove(id);
   }
 }

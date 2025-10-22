@@ -41,8 +41,20 @@ export class DashboardService {
       }),
       this.appointmentModel
         .find()
-        .populate('patientId', 'userId')
-        .populate('doctorId', 'userId')
+        .populate({
+          path: 'patientId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email'
+          }
+        })
+        .populate({
+          path: 'doctorId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email'
+          }
+        })
         .sort({ createdAt: -1 })
         .limit(5)
         .exec(),
@@ -140,13 +152,25 @@ export class DashboardService {
           appointmentDate: { $gte: new Date() },
           status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
         })
-        .populate('patientId', 'userId')
+        .populate({
+          path: 'patientId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email'
+          }
+        })
         .sort({ appointmentDate: 1 })
         .limit(10)
         .exec(),
       this.appointmentModel
         .find({ doctorId })
-        .populate('patientId', 'userId')
+        .populate({
+          path: 'patientId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email'
+          }
+        })
         .sort({ createdAt: -1 })
         .limit(5)
         .exec(),
@@ -156,7 +180,13 @@ export class DashboardService {
     // Get patient feedback (if you have a feedback system)
     const patientFeedback = await this.appointmentModel
       .find({ doctorId, status: AppointmentStatus.COMPLETED })
-      .populate('patientId', 'userId')
+      .populate({
+        path: 'patientId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .sort({ createdAt: -1 })
       .limit(5)
       .exec();
@@ -216,19 +246,37 @@ export class DashboardService {
           appointmentDate: { $gte: new Date() },
           status: { $in: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED] },
         })
-        .populate('doctorId', 'userId')
+        .populate({
+          path: 'doctorId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email'
+          }
+        })
         .sort({ appointmentDate: 1 })
         .limit(5)
         .exec(),
       this.appointmentModel
         .find({ patientId })
-        .populate('doctorId', 'userId')
+        .populate({
+          path: 'doctorId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email'
+          }
+        })
         .sort({ createdAt: -1 })
         .limit(5)
         .exec(),
       this.prescriptionModel
         .find({ patientId })
-        .populate('doctorId', 'userId')
+        .populate({
+          path: 'doctorId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email'
+          }
+        })
         .sort({ createdAt: -1 })
         .limit(5)
         .exec(),

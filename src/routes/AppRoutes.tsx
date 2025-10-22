@@ -8,6 +8,7 @@ import Reports from '@/pages/Reports';
 import Appointments from '@/pages/Appointments';
 import PatientPanel from '@/pages/PatientPanel';
 import DoctorPlan from '@/pages/DoctorPlan';
+import AdministratorPatients from '@/pages/AdministratorPatients';
 import Login from '@/pages/auth/Login';
 import Signup from '@/pages/auth/Signup';
 import Forgot from '@/pages/auth/Forgot';
@@ -70,6 +71,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={['Administrator']}>
               <Appointments />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/Administrator/patients" 
+          element={
+            <ProtectedRoute allowedRoles={['Administrator']}>
+              <AdministratorPatients />
             </ProtectedRoute>
           } 
         />

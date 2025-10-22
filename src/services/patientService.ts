@@ -87,4 +87,14 @@ export const patientService = {
     const response = await api.patch(`/patients/${id}`, data);
     return response.data;
   },
+
+  async createPatient(data: any) {
+    const response = await api.post('/patients', data);
+    return response.data;
+  },
+
+  async deletePatient(id: string) {
+    const response = await api.delete(`/patients/${id}`);
+    return response.data;
+  },
 };

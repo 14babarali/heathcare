@@ -76,8 +76,20 @@ export class AppointmentsService {
 
     const appointments = await this.appointmentModel
       .find(query)
-      .populate('patientId', 'userId')
-      .populate('doctorId', 'userId')
+      .populate({
+        path: 'patientId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
+      .populate({
+        path: 'doctorId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .sort({ appointmentDate: -1 })
       .exec();
 
@@ -92,8 +104,20 @@ export class AppointmentsService {
   async findOne(id: string) {
     const appointment = await this.appointmentModel
       .findById(id)
-      .populate('patientId', 'userId')
-      .populate('doctorId', 'userId')
+      .populate({
+        path: 'patientId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
+      .populate({
+        path: 'doctorId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .exec();
 
     if (!appointment) {
@@ -112,8 +136,20 @@ export class AppointmentsService {
 
     const updatedAppointment = await this.appointmentModel
       .findByIdAndUpdate(id, updateAppointmentDto, { new: true })
-      .populate('patientId', 'userId')
-      .populate('doctorId', 'userId')
+      .populate({
+        path: 'patientId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
+      .populate({
+        path: 'doctorId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .exec();
 
     await this.populateAppointment(updatedAppointment);
@@ -153,8 +189,20 @@ export class AppointmentsService {
         },
         { new: true }
       )
-      .populate('patientId', 'userId')
-      .populate('doctorId', 'userId')
+      .populate({
+        path: 'patientId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
+      .populate({
+        path: 'doctorId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .exec();
 
     await this.populateAppointment(updatedAppointment);
@@ -212,14 +260,13 @@ export class AppointmentsService {
   }
 
   private async populateAppointment(appointment: any) {
+    // With nested population, the user data is already populated
     if (appointment.patientId && appointment.patientId.userId) {
-      const patientUser = await this.userModel.findById(appointment.patientId.userId).exec();
-      appointment.patientUser = patientUser;
+      appointment.patientUser = appointment.patientId.userId;
     }
 
     if (appointment.doctorId && appointment.doctorId.userId) {
-      const doctorUser = await this.userModel.findById(appointment.doctorId.userId).exec();
-      appointment.doctorUser = doctorUser;
+      appointment.doctorUser = appointment.doctorId.userId;
     }
   }
 }

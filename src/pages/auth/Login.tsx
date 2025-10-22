@@ -131,7 +131,7 @@ export default function Login() {
         </button>
         
         <div className="flex items-center justify-between text-sm">
-          <Link to="/auth/forgot" className="text-blue-600 hover:underline">Forgot password?</Link>
+          {/* <Link to="/auth/forgot" className="text-blue-600 hover:underline">Forgot password?</Link> */}
           <Link to="/auth/signup" className="text-gray-600 hover:underline">Create account</Link>
         </div>
       </form>
