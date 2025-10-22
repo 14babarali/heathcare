@@ -45,7 +45,14 @@ export class AppointmentsService {
     });
 
     const savedAppointment = await appointment.save();
-    await this.populateAppointment(savedAppointment);
+    
+    // Ensure user data is properly attached
+    if (savedAppointment.patientId && (savedAppointment.patientId as any).userId) {
+      (savedAppointment as any).patientUser = (savedAppointment.patientId as any).userId;
+    }
+    if (savedAppointment.doctorId && (savedAppointment.doctorId as any).userId) {
+      (savedAppointment as any).doctorUser = (savedAppointment.doctorId as any).userId;
+    }
 
     // Send notification to doctor
     await this.notificationsService.create({
@@ -80,22 +87,53 @@ export class AppointmentsService {
         path: 'patientId',
         populate: {
           path: 'userId',
-          select: 'firstName lastName email'
+          select: 'firstName lastName email phone'
         }
       })
       .populate({
         path: 'doctorId',
         populate: {
           path: 'userId',
-          select: 'firstName lastName email'
+          select: 'firstName lastName email phone'
         }
       })
       .sort({ appointmentDate: -1 })
       .exec();
 
-    // Populate user details
+    // Ensure user data is properly attached
     for (const appointment of appointments) {
-      await this.populateAppointment(appointment);
+      // Handle patient data
+      if (appointment.patientId && (appointment.patientId as any).userId) {
+        (appointment as any).patientUser = (appointment.patientId as any).userId;
+      } else if (appointment.patientId && typeof appointment.patientId === 'string') {
+        // If patientId is a string, try to populate it manually
+        try {
+          const patient = await this.patientModel.findById(appointment.patientId).populate('userId').exec();
+          if (patient && patient.userId) {
+            (appointment as any).patientUser = patient.userId;
+          }
+        } catch (error) {
+          console.error('Error populating patient:', error);
+        }
+      }
+      
+      // Handle doctor data
+      if (appointment.doctorId && (appointment.doctorId as any).userId) {
+        (appointment as any).doctorUser = (appointment.doctorId as any).userId;
+      } else if (appointment.doctorId && typeof appointment.doctorId === 'string') {
+        // If doctorId is a string, try to populate it manually
+        try {
+          const doctor = await this.doctorModel.findById(appointment.doctorId).populate('userId').exec();
+          if (doctor && doctor.userId) {
+            (appointment as any).doctorUser = doctor.userId;
+          }
+        } catch (error) {
+          console.error('Error populating doctor:', error);
+        }
+      } else if (appointment.doctorId && typeof appointment.doctorId === 'object' && (appointment.doctorId as any).userId) {
+        // If doctorId is already populated with userId
+        (appointment as any).doctorUser = (appointment.doctorId as any).userId;
+      }
     }
 
     return appointments;
@@ -124,7 +162,14 @@ export class AppointmentsService {
       throw new NotFoundException('Appointment not found');
     }
 
-    await this.populateAppointment(appointment);
+    // Ensure user data is properly attached
+    if (appointment.patientId && (appointment.patientId as any).userId) {
+      (appointment as any).patientUser = (appointment.patientId as any).userId;
+    }
+    if (appointment.doctorId && (appointment.doctorId as any).userId) {
+      (appointment as any).doctorUser = (appointment.doctorId as any).userId;
+    }
+
     return appointment;
   }
 
@@ -152,7 +197,13 @@ export class AppointmentsService {
       })
       .exec();
 
-    await this.populateAppointment(updatedAppointment);
+    // Ensure user data is properly attached
+    if (updatedAppointment.patientId && (updatedAppointment.patientId as any).userId) {
+      (updatedAppointment as any).patientUser = (updatedAppointment.patientId as any).userId;
+    }
+    if (updatedAppointment.doctorId && (updatedAppointment.doctorId as any).userId) {
+      (updatedAppointment as any).doctorUser = (updatedAppointment.doctorId as any).userId;
+    }
 
     // Send notification if status changed
     if (updateAppointmentDto.status && updateAppointmentDto.status !== appointment.status) {
@@ -205,7 +256,13 @@ export class AppointmentsService {
       })
       .exec();
 
-    await this.populateAppointment(updatedAppointment);
+    // Ensure user data is properly attached
+    if (updatedAppointment.patientId && (updatedAppointment.patientId as any).userId) {
+      (updatedAppointment as any).patientUser = (updatedAppointment.patientId as any).userId;
+    }
+    if (updatedAppointment.doctorId && (updatedAppointment.doctorId as any).userId) {
+      (updatedAppointment as any).doctorUser = (updatedAppointment.doctorId as any).userId;
+    }
 
     // Send notification
     await this.notificationsService.create({
@@ -259,14 +316,4 @@ export class AppointmentsService {
     return this.findAll(query);
   }
 
-  private async populateAppointment(appointment: any) {
-    // With nested population, the user data is already populated
-    if (appointment.patientId && appointment.patientId.userId) {
-      appointment.patientUser = appointment.patientId.userId;
-    }
-
-    if (appointment.doctorId && appointment.doctorId.userId) {
-      appointment.doctorUser = appointment.doctorId.userId;
-    }
-  }
 }

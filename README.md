@@ -1,73 +1,19 @@
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+| Email | Name | Role |
+|--------|------|------|
+| admin@healthcare.com | System Administrator | Administrator |
+| dr.sarah.ahmed@healthcare.com | Sarah Ahmed | Doctor |
+| dr.michael.chen@healthcare.com | Michael Chen | Doctor |
+| dr.emily.rodriguez@healthcare.com | Emily Rodriguez | Doctor |
+| dr.james.wilson@healthcare.com | James Wilson | Doctor |
+| dr.lisa.patel@healthcare.com | Lisa Patel | Doctor |
+| dr.robert.kim@healthcare.com | Robert Kim | Doctor |
+| dr.maria.garcia@healthcare.com | Maria Garcia | Doctor |
+| dr.david.thompson@healthcare.com | David Thompson | Doctor |
+| john.smith@email.com | John Smith | Patient |
+| mary.johnson@email.com | Mary Johnson | Patient |
+| carlos.rodriguez@email.com | Carlos Rodriguez | Patient |
+| sarah.williams@email.com | Sarah Williams | Patient |
+| ahmed.hassan@email.com | Ahmed Hassan | Patient |
+| jennifer.brown@email.com | Jennifer Brown | Patient |
+| li.wei@email.com | Li Wei | Patient |
+| emma.davis@email.com | Emma Davis | Patient |

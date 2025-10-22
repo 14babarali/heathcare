@@ -71,8 +71,8 @@ const AppointmentsContent = () => {
           description: "Manage all system appointments and scheduling",
           appointments: appointments.map((apt: any) => ({
             id: apt._id,
-            patient: `${apt.patientUser?.firstName || 'Unknown'} ${apt.patientUser?.lastName || 'Patient'}`,
-            doctor: `${apt.doctorUser?.firstName || 'Dr.'} ${apt.doctorUser?.lastName || 'Unknown'}`,
+            patient: `${apt.patientId?.userId?.firstName || 'Unknown'} ${apt.patientId?.userId?.lastName || 'Patient'}`,
+            doctor: `${apt.doctorId?.userId?.firstName || 'Dr.'} ${apt.doctorId?.userId?.lastName || 'Unknown'}`,
             date: new Date(apt.appointmentDate).toLocaleDateString(),
             time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
               hour: 'numeric', 
@@ -93,7 +93,7 @@ const AppointmentsContent = () => {
             .filter((apt: any) => apt.doctorId?._id === user?.id)
             .map((apt: any) => ({
               id: apt._id,
-              patient: `${apt.patientUser?.firstName || 'Unknown'} ${apt.patientUser?.lastName || 'Patient'}`,
+              patient: `${apt.patientId?.userId?.firstName || 'Unknown'} ${apt.patientId?.userId?.lastName || 'Patient'}`,
               patientPhone: apt.patientId?.phoneNumber || "No phone available",
               date: new Date(apt.appointmentDate).toLocaleDateString(),
               time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
@@ -116,7 +116,7 @@ const AppointmentsContent = () => {
             .filter((apt: any) => apt.patientId?._id === user?.id)
             .map((apt: any) => ({
               id: apt._id,
-              doctor: `Dr. ${apt.doctorUser?.firstName || 'Unknown'} ${apt.doctorUser?.lastName || 'Unknown'}`,
+              doctor: `Dr. ${apt.doctorId?.userId?.firstName || 'Unknown'} ${apt.doctorId?.userId?.lastName || 'Unknown'}`,
               doctorSpecialty: apt.doctorId?.specialty || "General Medicine",
               date: new Date(apt.appointmentDate).toLocaleDateString(),
               time: new Date(apt.appointmentDate).toLocaleTimeString('en-US', { 
