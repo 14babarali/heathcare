@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import * as compression from 'compression';
 import * as cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -18,14 +19,64 @@ async function bootstrap() {
     credentials: true,
   }));
 
-  // Rate limiting
-  app.use(
-    rateLimit({
-      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-      max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
-      message: 'Too many requests from this IP, please try again later.',
-    }),
-  );
+  // Rate limiting - completely disabled for development
+  const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+  
+  // Development bypass middleware - must be before any rate limiting
+  if (isDevelopment) {
+    app.use((req, res, next) => {
+      // Add headers to bypass any rate limiting
+      res.set('X-RateLimit-Limit', 'unlimited');
+      res.set('X-RateLimit-Remaining', 'unlimited');
+      res.set('X-RateLimit-Reset', 'never');
+      next();
+    });
+  }
+  
+  if (!isDevelopment) {
+    // Only apply rate limiting in production
+    app.use(
+      rateLimit({
+        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+        max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // 100 requests per window
+        message: 'Too many requests from this IP, please try again later.',
+        standardHeaders: true,
+        legacyHeaders: false,
+      }),
+    );
+
+    // Specific rate limiting for authentication endpoints in production only
+    app.use('/auth', 
+      rateLimit({
+        windowMs: parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
+        max: parseInt(process.env.AUTH_RATE_LIMIT_MAX_REQUESTS) || 10, // 10 attempts in prod
+        message: 'Too many authentication attempts from this IP, please try again later.',
+        standardHeaders: true,
+        legacyHeaders: false,
+        skipSuccessfulRequests: true, // Don't count successful requests
+      })
+    );
+  } else {
+    console.log('🚀 Development mode: Rate limiting disabled for easier testing');
+    
+    // Add development bypass middleware for localhost
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      // Skip rate limiting for localhost in development
+      if (req.ip === '::1' || req.ip === '127.0.0.1' || req.ip === '::ffff:127.0.0.1') {
+        console.log(`🔓 Development bypass for ${req.ip} - ${req.method} ${req.path}`);
+      }
+      next();
+    });
+  }
+
+  // Development bypasses
+  if (isDevelopment) {
+    // Bypass rate limiting for authentication endpoints in development
+    app.use('/auth', (req: any, res: any, next: any) => {
+      console.log(`🔓 Auth bypass for ${req.method} ${req.path} from ${req.ip}`);
+      next();
+    });
+  }
 
   // Global validation pipe
   app.useGlobalPipes(

@@ -68,7 +68,18 @@ export default function Login() {
       
     } catch (error: any) {
       console.error('Login error:', error);
-      const errorMessage = error.response?.data?.message || error.message || "Login failed. Please check your credentials.";
+      
+      let errorMessage = "Login failed. Please check your credentials.";
+      
+      // Handle rate limiting errors
+      if (error.response?.status === 429) {
+        errorMessage = error.message || "Too many login attempts. Please wait a moment before trying again.";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       setErrors({ general: errorMessage });
       message.error(errorMessage);
     } finally {

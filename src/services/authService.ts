@@ -11,12 +11,24 @@ import type {
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    // Use login-email endpoint that automatically detects role
-    const response = await api.post('/auth/login-email', {
-      email: credentials.email,
-      password: credentials.password
-    });
-    return response.data;
+    try {
+      // Use login-email endpoint that automatically detects role
+      const response = await api.post('/auth/login-email', {
+        email: credentials.email,
+        password: credentials.password
+      });
+      return response.data;
+    } catch (error: any) {
+      // Handle rate limiting errors specifically
+      if (error.response?.status === 429) {
+        const retryAfter = error.response.headers['retry-after'];
+        const message = retryAfter 
+          ? `Too many login attempts. Please try again in ${retryAfter} seconds.`
+          : 'Too many login attempts. Please wait a moment before trying again.';
+        throw new Error(message);
+      }
+      throw error;
+    }
   },
 
   async register(userData: RegisterRequest): Promise<AuthResponse> {
