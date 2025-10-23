@@ -161,39 +161,80 @@ export class PrescriptionsService {
     return updatedPrescription;
   }
 
-  async getPatientPrescriptions(patientId: string) {
-    return this.findAll({ patientId });
+  async getPatientPrescriptions(userId: string) {
+    // First, find the patient record for this user
+    const patient = await this.patientModel.findOne({ userId }).exec();
+    if (!patient) {
+      throw new NotFoundException('Patient not found');
+    }
+
+    return this.findAll({ patientId: patient._id });
   }
 
   async getDoctorPrescriptions(doctorId: string) {
     return this.findAll({ doctorId });
   }
 
-  async getRecentPrescriptions(patientId: string, limit: number = 5) {
+  async getRecentPrescriptions(userId: string, limit: number = 5) {
+    console.log('Getting recent prescriptions for userId:', userId);
+    
+    // First, find the patient record for this user
+    const patient = await this.patientModel.findOne({ userId }).exec();
+    console.log('Found patient:', patient);
+    
+    if (!patient) {
+      console.log('Patient not found for userId:', userId);
+      throw new NotFoundException('Patient not found');
+    }
+
     const prescriptions = await this.prescriptionModel
-      .find({ patientId })
-      .populate('patientId', 'userId')
-      .populate('doctorId', 'userId')
+      .find({ patientId: patient._id })
+      .populate({
+        path: 'patientId',
+        select: 'userId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
+      .populate({
+        path: 'doctorId',
+        select: 'userId specialty',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .sort({ createdAt: -1 })
       .limit(limit)
       .exec();
+
+    console.log('Found prescriptions:', prescriptions.length);
 
     for (const prescription of prescriptions) {
       await this.populatePrescription(prescription);
     }
 
+    console.log('Returning prescriptions:', prescriptions);
     return prescriptions;
   }
 
   private async populatePrescription(prescription: any) {
+    console.log('Populating prescription:', prescription._id);
+    console.log('DoctorId data:', prescription.doctorId);
+    
+    // Patient data is already populated by the query
     if (prescription.patientId && prescription.patientId.userId) {
-      const patientUser = await this.userModel.findById(prescription.patientId.userId).exec();
-      prescription.patientUser = patientUser;
+      prescription.patientUser = prescription.patientId.userId;
+      console.log('Patient user:', prescription.patientUser?.firstName, prescription.patientUser?.lastName);
     }
 
+    // Doctor data is already populated by the query
     if (prescription.doctorId && prescription.doctorId.userId) {
-      const doctorUser = await this.userModel.findById(prescription.doctorId.userId).exec();
-      prescription.doctorUser = doctorUser;
+      prescription.doctorUser = prescription.doctorId.userId;
+      console.log('Doctor user:', prescription.doctorUser?.firstName, prescription.doctorUser?.lastName);
+    } else {
+      console.log('No doctorId or userId found for prescription:', prescription._id);
     }
   }
 }

@@ -2,22 +2,35 @@ import { useState, useEffect } from "react";
 import { notificationService } from "@/services/notificationService";
 
 interface Reminder {
-  id: string;
+  _id: string;
+  id?: string;
   title: string;
   message: string;
   type: string;
-  priority: string;
-  scheduledFor: string;
+  data?: any;
   isRead: boolean;
+  readAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-const Reminder = ({ reminder }: { reminder: Reminder }) => {
-  const getColorClass = (type: string, priority: string) => {
-    if (priority === 'high') return 'bg-red-50 border-red-200';
-    if (type === 'medication') return 'bg-blue-50 border-blue-200';
-    if (type === 'appointment') return 'bg-green-50 border-green-200';
-    if (type === 'lab') return 'bg-yellow-50 border-yellow-200';
+const Reminder = ({ reminder, onMarkAsRead }: { reminder: Reminder; onMarkAsRead: (id: string) => void }) => {
+  const getColorClass = (type: string) => {
+    if (type === 'appointment_reminder') return 'bg-green-50 border-green-200';
+    if (type === 'appointment_confirmed') return 'bg-blue-50 border-blue-200';
+    if (type === 'prescription_ready') return 'bg-purple-50 border-purple-200';
+    if (type === 'message_received') return 'bg-yellow-50 border-yellow-200';
+    if (type === 'system_announcement') return 'bg-gray-50 border-gray-200';
     return 'bg-gray-50 border-gray-200';
+  };
+
+  const getIcon = (type: string) => {
+    if (type === 'appointment_reminder') return '📅';
+    if (type === 'appointment_confirmed') return '✅';
+    if (type === 'prescription_ready') return '💊';
+    if (type === 'message_received') return '💬';
+    if (type === 'system_announcement') return '📢';
+    return '🔔';
   };
 
   const formatTime = (dateString: string) => {
@@ -44,10 +57,30 @@ const Reminder = ({ reminder }: { reminder: Reminder }) => {
     }
   };
 
+  const handleClick = () => {
+    if (!reminder.isRead) {
+      onMarkAsRead(reminder._id);
+    }
+  };
+
   return (
-    <div className={`flex items-center justify-between rounded-lg p-3 border ${getColorClass(reminder.type, reminder.priority)}`}>
-      <span className="text-sm text-gray-800">{reminder.title}</span>
-      <span className="text-xs text-gray-600">{formatTime(reminder.scheduledFor)}</span>
+    <div 
+      className={`flex items-center justify-between rounded-lg p-3 border cursor-pointer hover:shadow-sm transition-shadow ${getColorClass(reminder.type)} ${!reminder.isRead ? 'ring-1 ring-blue-200' : ''}`}
+      onClick={handleClick}
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-lg">{getIcon(reminder.type)}</span>
+        <div>
+          <span className="text-sm font-medium text-gray-800">{reminder.title}</span>
+          <p className="text-xs text-gray-600 mt-1">{reminder.message}</p>
+        </div>
+      </div>
+      <div className="text-right">
+        <span className="text-xs text-gray-600">{formatTime(reminder.createdAt)}</span>
+        {!reminder.isRead && (
+          <div className="w-2 h-2 bg-blue-500 rounded-full mt-1 ml-auto"></div>
+        )}
+      </div>
     </div>
   );
 };
@@ -61,12 +94,31 @@ export default function UpcomingReminders() {
       try {
         setLoading(true);
         const data = await notificationService.getMyNotifications();
-        // Filter for reminder type notifications
-        const reminderData = data.filter((notification: any) => 
-          notification.type === 'reminder' || 
-          notification.type === 'appointment' ||
-          notification.type === 'prescription'
-        );
+        
+        // Filter for relevant notification types and sort by creation date
+        const reminderData = data
+          .filter((notification: any) => 
+            notification.type === 'appointment_reminder' || 
+            notification.type === 'appointment_confirmed' ||
+            notification.type === 'prescription_ready' ||
+            notification.type === 'message_received' ||
+            notification.type === 'system_announcement'
+          )
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 5) // Limit to 5 most recent
+          .map((notification: any) => ({
+            _id: notification._id,
+            id: notification._id,
+            title: notification.title,
+            message: notification.message,
+            type: notification.type,
+            data: notification.data,
+            isRead: notification.isRead,
+            readAt: notification.readAt,
+            createdAt: notification.createdAt,
+            updatedAt: notification.updatedAt
+          }));
+        
         setReminders(reminderData);
       } catch (error) {
         console.error('Error fetching reminders:', error);
@@ -94,6 +146,23 @@ export default function UpcomingReminders() {
     );
   }
 
+  const markAsRead = async (notificationId: string) => {
+    try {
+      await notificationService.markAsRead(notificationId);
+      // Update the local state
+      setReminders(prevReminders => 
+        prevReminders.map(reminder => 
+          reminder._id === notificationId 
+            ? { ...reminder, isRead: true, readAt: new Date().toISOString() }
+            : reminder
+        )
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+
   if (reminders.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -110,7 +179,11 @@ export default function UpcomingReminders() {
       <h3 className="text-sm font-semibold text-gray-800 mb-3">Upcoming Reminders</h3>
       <div className="space-y-3">
         {reminders.map((reminder) => (
-          <Reminder key={reminder.id} reminder={reminder} />
+          <Reminder 
+            key={reminder._id} 
+            reminder={reminder} 
+            onMarkAsRead={markAsRead}
+          />
         ))}
       </div>
     </div>

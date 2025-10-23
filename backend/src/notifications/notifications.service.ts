@@ -77,10 +77,12 @@ export class NotificationsService {
   }
 
   async getUserNotifications(userId: string) {
-    return this.notificationModel
+    const notifications = await this.notificationModel
       .find({ userId, isDeleted: false })
       .sort({ createdAt: -1 })
       .exec();
+    
+    return notifications;
   }
 
   async getUnreadNotifications(userId: string) {
@@ -171,4 +173,5 @@ export class NotificationsService {
       message,
     });
   }
+
 }

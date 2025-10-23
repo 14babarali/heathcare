@@ -81,4 +81,5 @@ export class NotificationsController {
   deleteAll(@Request() req) {
     return this.notificationsService.deleteAll(req.user.userId);
   }
+
 }

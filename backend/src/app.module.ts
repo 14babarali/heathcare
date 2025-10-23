@@ -21,7 +21,6 @@ import { UploadModule } from './upload/upload.module';
 // Configuration
 import { DatabaseConfig } from './config/database.config';
 import { JwtConfig } from './config/jwt.config';
-import { SeedService } from './config/seed.service';
 
 @Module({
   imports: [
@@ -56,6 +55,6 @@ import { SeedService } from './config/seed.service';
     SettingsModule,
     UploadModule,
   ],
-  providers: [SeedService],
+  providers: [],
 })
 export class AppModule {}

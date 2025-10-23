@@ -79,4 +79,5 @@ export const notificationService = {
     const response = await api.delete('/notifications/all');
     return response.data;
   },
+
 };
